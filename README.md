@@ -127,3 +127,28 @@ make check
  | `make lint`   | ruff check                   | 
  | `make format` | ruff format                  | 
  | `make run`    | executa exemplo local        | 
+
+## Configuração
+
+Variáveis de ambiente (ou arquivo `.env` na raiz):
+
+ | Variável | Default | Descrição | 
+ | ----- | ------- | ------- |  
+ | `OLLAMA_BASE_URL` | `http://localhost:11434` | Endpoint do Ollama | 
+ | `OLLAMA_MODEL` | `llama3.1:8b` | Modelo padrão se não especificado no YAML | 
+ | `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` | 
+ | `MAX_RETRIES` | `2` | Retries em caso de erro de ferramenta | 
+ | `TIMEOUT_SEGUNDOS` | `120` | Timeout global por execução | 
+
+## Versão
+`v0.1.0` — Loop funcional, execução single-thread, Ollama, CLI.
+Changelog em `CHANGELOG.md`
+
+## Repositórios relacionados
+ | Repo | Propósito | 
+ | ----- | ----- | 
+ | platform-docs | Documentação e ADRs | 
+ | agent-sdk | SDK e template de agentes | 
+ | google-calendar-agent | Primeiro agente funcional | 
+
+## Licença
