@@ -152,3 +152,8 @@ Changelog em `CHANGELOG.md`
  | google-calendar-agent | Primeiro agente funcional | 
 
 ## Licença
+
+Este projeto é licenciado sob a **PolyForm Noncommercial License 1.0.0**.
+
+- ✅ Livre para uso educacional, pessoal e de pesquisa
+- ❌ Uso comercial requer licença paga — entre em contato

@@ -7,7 +7,7 @@ name = "platform-core"
 version = "0.1.0"
 description = "Motor de execução genérico de agentes. Carrega definições YAML, conecta ao LLM e executa ferramentas."
 readme = "README.md"
-license = "MIT"
+license = { text = "PolyForm-Noncommercial-1.0.0" }
 requires-python = ">=3.11"
 authors = [{ name = "Seu Nome", email = "seu@email.com" }]
 keywords = ["agents", "llm", "automation", "ollama"]
