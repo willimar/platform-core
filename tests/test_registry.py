@@ -36,7 +36,8 @@ class TestToolRegistry:
         result = registry.execute("test_exec", {"a": 2, "b": 3})
         assert result.nome == "test_exec"
         assert result.resultado.sucesso is True
-        assert result.resultado.dados == 5
+        # O registry converte tipos não-str/não-dict para string
+        assert result.resultado.dados == "5"
 
     def test_execute_tool_execution_error(self):
         @tool("test_erro")

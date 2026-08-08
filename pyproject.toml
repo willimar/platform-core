@@ -19,10 +19,8 @@ dependencies = [
     "typer>=0.12",
     "rich>=13.0",
     "structlog>=24.0",
-    "agent-sdk", 
+    "agent-sdk",
 ]
-
-# ── Grupos de desenvolvimento (PEP 735) ────────────────────────
 
 [dependency-groups]
 dev = [
@@ -33,20 +31,14 @@ dev = [
     "ipython>=8.0",
 ]
 
-# ── Scripts / CLI ──────────────────────────────────────────────
-
 [project.scripts]
 platform = "platform_core.cli:app"
-
-# ── Hatch (build) ──────────────────────────────────────────────
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/platform_core"]
 
 [tool.hatch.build.targets.sdist]
 include = ["src/", "README.md", "pyproject.toml"]
-
-# ── Ruff ───────────────────────────────────────────────────────
 
 [tool.ruff]
 target-version = "py311"
@@ -64,8 +56,6 @@ known-first-party = ["platform_core", "agent_sdk"]
 quote-style = "double"
 indent-style = "space"
 
-# ── Pytest ─────────────────────────────────────────────────────
-
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["--strict-markers", "--tb=short", "-q"]
@@ -73,8 +63,6 @@ markers = [
     "integration: testes que chamam APIs reais",
     "slow: testes demorados",
 ]
-
-# ── Coverage ───────────────────────────────────────────────────
 
 [tool.coverage.run]
 source = ["src/platform_core"]
@@ -84,3 +72,6 @@ omit = ["*/tests/*"]
 show_missing = true
 skip_empty = true
 fail_under = 70
+
+[tool.uv.sources]
+agent-sdk = { workspace = true }
