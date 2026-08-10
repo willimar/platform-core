@@ -19,7 +19,7 @@ app = typer.Typer(
     help="Motor de execução genérico de agentes.",
     add_completion=False,
 )
-console = Console()
+console = Console(emoji=False)
 
 
 @app.command()
@@ -38,7 +38,7 @@ def run(
     try:
         # 1. Carrega o agente
         config = load_agent(agent_path)
-        console.print(f"[bold green]✓[/] Agente carregado: {config.nome} v{config.versao}")
+        console.print(f"[bold green][OK][/] Agente carregado: {config.nome} v{config.versao}")
 
         # 2. Carrega as ferramentas do diretório do agente
         agent_dir = agent_path.parent
@@ -47,15 +47,15 @@ def run(
         registry = ToolRegistry()
         if tools_dir.exists():
             count = registry.load_from_directory(tools_dir)
-            console.print(f"[bold green]✓[/] {count} ferramenta(s) carregada(s)")
+            console.print(f"[bold green][OK][/] {count} ferramenta(s) carregada(s)")
         else:
-            console.print("[yellow]⚠[/] Diretório tools/ não encontrado")
+            console.print("[yellow][AVISO][/] Diretorio tools/ nao encontrado")
 
         # 3. Valida que todas as ferramentas declaradas existem
         faltando = [t for t in config.ferramentas if not registry.has(t)]
         if faltando:
             console.print(
-                f"[bold red]✗[/] Ferramentas não encontradas: {', '.join(faltando)}"
+                f"[bold red][ERRO][/] Ferramentas nao encontradas: {', '.join(faltando)}"
             )
             raise typer.Exit(code=1)
 
@@ -89,14 +89,14 @@ def run(
         console.print(
             f"\n[dim]Passos: {state.passo_atual} | "
             f"Ferramentas usadas: {len(state.ferramentas_usadas)} | "
-            f"Duração: {state.metadata.get('duracao_total_s', 0):.2f}s[/]"
+            f"Duracao: {state.metadata.get('duracao_total_s', 0):.2f}s[/]"
         )
 
     except AgentLoadError as e:
-        console.print(f"[bold red]Erro ao carregar agente:[/] {e}")
+        console.print(f"[bold red][ERRO][/] Erro ao carregar agente: {e}")
         raise typer.Exit(code=1)
     except Exception as e:
-        console.print(f"[bold red]Erro inesperado:[/] {e}")
+        console.print(f"[bold red][ERRO][/] Erro inesperado: {e}")
         if verbose:
             console.print_exception()
         raise typer.Exit(code=1)
@@ -111,12 +111,12 @@ def validate(
     """Valida um agent.yaml sem executar."""
     try:
         config = load_agent(agent_path)
-        console.print(f"[bold green]✓[/] YAML válido: {config.nome} v{config.versao}")
+        console.print(f"[bold green][OK][/] YAML valido: {config.nome} v{config.versao}")
         console.print(f"  Modelo: {config.modelo}")
         console.print(f"  Ferramentas: {', '.join(config.ferramentas)}")
         console.print(f"  Max passos: {config.max_passos}")
     except AgentLoadError as e:
-        console.print(f"[bold red]✗[/] YAML inválido: {e}")
+        console.print(f"[bold red][ERRO][/] YAML invalido: {e}")
         raise typer.Exit(code=1)
 
 
@@ -151,12 +151,13 @@ def tools_list(
         for nome in config.ferramentas:
             if registry.has(nome):
                 spec = registry.get(nome)
-                console.print(f"  [green]✓[/] {nome}: {spec.descricao if spec else 'N/A'}")
+                desc = spec.descricao if spec else "N/A"
+                console.print(f"  [green][OK][/] {nome}: {desc}")
             else:
-                console.print(f"  [red]✗[/] {nome}: [red]NÃO ENCONTRADA[/]")
+                console.print(f"  [red][ERRO][/] {nome}: NAO ENCONTRADA")
 
     except AgentLoadError as e:
-        console.print(f"[bold red]Erro:[/] {e}")
+        console.print(f"[bold red][ERRO][/] {e}")
         raise typer.Exit(code=1)
 
 

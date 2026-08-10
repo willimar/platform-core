@@ -7,10 +7,11 @@ e fornece execução segura com captura de erros.
 from __future__ import annotations
 
 import importlib
+import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from agent_sdk import ToolExecutionError, ToolResult, ToolSpec, get_registry
 
@@ -29,20 +30,13 @@ class ToolExecutionResult:
 
 
 class ToolRegistry:
-    """Registry de ferramentas disponíveis para um agente.
-
-    Descobre ferramentas em módulos de agente e as executa com
-    tratamento de erros e logging.
-    """
+    """Registry de ferramentas disponíveis para um agente."""
 
     def __init__(self) -> None:
         self._tools: dict[str, ToolSpec] = {}
 
     def register(self, spec: ToolSpec) -> None:
         """Registra uma ferramenta.
-
-        Args:
-            spec: Especificação da ferramenta.
 
         Raises:
             ValueError: Se ferramenta com mesmo nome já estiver registrada.
@@ -53,11 +47,7 @@ class ToolRegistry:
         logger.info("ferramenta_registrada", nome=spec.nome)
 
     def register_from_global(self) -> int:
-        """Registra todas as ferramentas do registry global do agent-sdk.
-
-        Returns:
-            Número de ferramentas registradas.
-        """
+        """Registra todas as ferramentas do registry global do agent-sdk."""
         global_registry = get_registry()
         count = 0
         for spec in global_registry.values():
@@ -67,20 +57,16 @@ class ToolRegistry:
         return count
 
     def load_from_module(self, module_name: str) -> int:
-        """Carrega um módulo Python, disparando os decorators @tool.
-
-        Args:
-            module_name: Nome do módulo (ex: 'tools.calendar').
-
-        Returns:
-            Número de ferramentas novas registradas.
-        """
+        """Carrega um módulo Python, disparando os decorators @tool."""
         logger.info("carregando_modulo", modulo=module_name)
         importlib.import_module(module_name)
         return self.register_from_global()
 
     def load_from_directory(self, directory: Path) -> int:
-        """Carrega todos os módulos .py em um diretório.
+        """Carrega todos os módulos .py de um diretório como pacote.
+
+        Adiciona o diretório-pai ao sys.path para que imports internos
+        do agente (ex: from tools.auth import ...) funcionem.
 
         Args:
             directory: Diretório contendo módulos com ferramentas.
@@ -88,23 +74,31 @@ class ToolRegistry:
         Returns:
             Número total de ferramentas novas registradas.
         """
+        directory = Path(directory).resolve()
+        parent = directory.parent
+
         if not directory.exists():
             logger.warning("diretorio_nao_existe", diretorio=str(directory))
             return 0
 
+        path_added = False
+        if str(parent) not in sys.path:
+            sys.path.insert(0, str(parent))
+            path_added = True
+
         count = 0
-        for path in directory.glob("*.py"):
-            if path.name.startswith("_"):
-                continue
-            module_name = path.stem
-            logger.info("carregando_modulo", modulo=module_name, path=str(path))
-            spec_loader = importlib.util.spec_from_file_location(
-                module_name, path
-            )
-            if spec_loader and spec_loader.loader:
-                module = importlib.util.module_from_spec(spec_loader)
-                spec_loader.loader.exec_module(module)
+        try:
+            for path in sorted(directory.glob("*.py")):
+                if path.name.startswith("_"):
+                    continue
+                module_name = f"{directory.name}.{path.stem}"
+                logger.info("carregando_modulo", modulo=module_name, path=str(path))
+                importlib.import_module(module_name)
                 count += self.register_from_global()
+        finally:
+            if path_added:
+                sys.path.remove(str(parent))
+
         return count
 
     def get(self, nome: str) -> ToolSpec | None:
@@ -126,14 +120,7 @@ class ToolRegistry:
     def execute(
         self, nome: str, parametros: dict[str, Any] | None = None
     ) -> ToolExecutionResult:
-        """Executa uma ferramenta.
-
-        Args:
-            nome: Nome da ferramenta.
-            parametros: Dicionário de parâmetros para a função.
-
-        Returns:
-            ToolExecutionResult com o resultado e tempo de execução.
+        """Executa uma ferramenta com captura de erros.
 
         Raises:
             KeyError: Se ferramenta não estiver registrada.
@@ -143,18 +130,13 @@ class ToolRegistry:
             raise KeyError(f"Ferramenta '{nome}' não encontrada no registry")
 
         params = parametros or {}
-        logger.info(
-            "executando_ferramenta",
-            ferramenta=nome,
-            parametros=params,
-        )
+        logger.info("executando_ferramenta", ferramenta=nome, parametros=params)
 
         inicio = time.perf_counter()
         try:
             resultado = spec.funcao(**params)
             duracao_ms = (time.perf_counter() - inicio) * 1000
 
-            # Converte resultado string/dict para ToolResult se necessário
             if isinstance(resultado, ToolResult):
                 tool_result = resultado
             elif isinstance(resultado, (str, dict)):
