@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: platform-core
+
+      - name: Checkout agent-sdk (dependencia)
+        uses: actions/checkout@v4
+        with:
+          repository: willimar/agent-sdk
+          path: agent-sdk
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - run: uv python install 3.12
+
+      - name: Montar workspace
+        run: |
+          printf '[tool.uv.workspace]\nmembers = ["agent-sdk", "platform-core"]\n' > pyproject.toml
+          printf '\n[tool.uv.sources]\nagent-sdk = { workspace = true }\n' >> platform-core/pyproject.toml
+
+      - name: Lint
+        working-directory: platform-core
+        run: |
+          uv run ruff check src tests
+          uv run ruff format --check src tests
+
+      - name: Testes
+        working-directory: platform-core
+        run: uv run pytest
