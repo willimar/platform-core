@@ -82,14 +82,15 @@ def _verificar_modelo_ollama(modelo: str) -> None:
     try:
         response = httpx.get(url, timeout=5.0)
         response.raise_for_status()
-    except httpx.RequestError as e:
+    except Exception as e:
         logger.warning(
             "ollama_indisponivel",
             url=url,
             erro=str(e),
+            tipo=type(e).__name__,
         )
-        # Não falha a validação — pode ser que o Ollama esteja offline
-        # mas o modelo ainda funcione quando chamar
+        # Não falha a validação — Ollama pode estar offline agora
+        # mas funcionar quando o executor chamar
         return
 
     try:

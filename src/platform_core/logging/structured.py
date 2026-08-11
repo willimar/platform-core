@@ -26,11 +26,14 @@ def setup_logging(verbose: bool = False) -> None:
     settings = get_settings()
     level = "DEBUG" if verbose else settings.log_level
 
-    # Cria o diretório de logs se não existir
+    # Cria o diretório de logs
     settings.log_dir.mkdir(parents=True, exist_ok=True)
     log_file = settings.log_dir / "platform.log"
 
-    # Processors comuns
+    # Abre o arquivo de log (append mode, autoflush via line_buffering)
+    log_file_handle = open(log_file, "a", encoding="utf-8", buffering=1)
+
+    # Renderers
     processors = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
@@ -38,23 +41,6 @@ def setup_logging(verbose: bool = False) -> None:
         structlog.processors.TimeStamper(fmt="iso"),
     ]
 
-    # Configura logging padrão (pra capturar logs de libs externas)
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stderr,
-        level=getattr(logging, level, logging.INFO),
-    )
-
-    # Handler de arquivo (JSON, rotação por tamanho)
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setLevel(getattr(logging, level, logging.INFO))
-    file_handler.setFormatter(logging.Formatter("%(message)s"))
-
-    # Logger raiz
-    root_logger = logging.getLogger()
-    root_logger.addHandler(file_handler)
-
-    # Renderers
     if verbose:
         console_renderer = structlog.dev.ConsoleRenderer()
     else:
@@ -62,33 +48,50 @@ def setup_logging(verbose: bool = False) -> None:
 
     file_renderer = structlog.processors.JSONRenderer()
 
+    # Configura loggers separados: stderr (colorido ou JSON) e arquivo (sempre JSON)
+    class DualWriter:
+        """Escreve em dois sinks com renderers diferentes."""
+        def __init__(self, console_out, file_out):
+            self.console_out = console_out
+            self.file_out = file_out
+
+        def write(self, event_dict):
+            # Console
+            try:
+                self.console_out(event_dict, None)
+            except Exception:
+                pass
+            # Arquivo
+            try:
+                linha = file_renderer(None, None, event_dict)
+                self.file_out.write(linha + "\n")
+            except Exception:
+                pass
+
+        def flush(self):
+            try:
+                self.file_out.flush()
+            except Exception:
+                pass
+
+    console_writer = console_renderer
+    writer = DualWriter(console_writer, log_file_handle)
+
     structlog.configure(
         processors=processors + [
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+            lambda logger, method_name, event_dict: writer.write(event_dict) or event_dict,
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
             getattr(logging, level, logging.INFO)
         ),
         context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True,
+        logger_factory=structlog.PrintLoggerFactory(),
+        cache_logger_on_first_use=False,
     )
-
-    # Formatter pro console
-    console_formatter = structlog.stdlib.ProcessorFormatter(
-        processor=console_renderer,
-    )
-    console_handler = logging.StreamHandler(sys.stderr)
-    console_handler.setFormatter(console_formatter)
-    root_logger.addHandler(console_handler)
-
-    # Formatter pro arquivo
-    file_formatter = structlog.stdlib.ProcessorFormatter(
-        processor=file_renderer,
-    )
-    file_handler.setFormatter(file_formatter)
 
     _configurado = True
+
+    # Log de bootstrap (depois de configurado)
     get_logger(__name__).info(
         "logging_configurado",
         level=level,
@@ -96,11 +99,8 @@ def setup_logging(verbose: bool = False) -> None:
     )
 
 
-def get_logger(name: str) -> structlog.stdlib.BoundLogger:
-    """Retorna um logger estruturado.
-
-    Inicializa a configuração padrão se ainda não estiver configurado.
-    """
+def get_logger(name: str):
+    """Retorna um logger estruturado."""
     if not _configurado:
         setup_logging()
     return structlog.get_logger(name)
