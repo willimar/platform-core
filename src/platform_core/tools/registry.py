@@ -164,7 +164,9 @@ class ToolRegistry:
             )
             return ToolExecutionResult(
                 nome=nome,
-                resultado=ToolResult.falha(e.mensagem, duracao_ms=duracao_ms),
+                resultado=ToolResult.falha(
+                    e.mensagem, duracao_ms=duracao_ms, retry=e.retry
+                ),
                 duracao_ms=duracao_ms,
             )
 
