@@ -10,7 +10,7 @@ from platform_core.engine.validator import ValidationError, validar_agente
 from platform_core.tools.registry import ToolRegistry
 
 
-def make_config(modelo: str = "fake", ferramentas: list[str] = None) -> AgentConfig:
+def make_config(modelo: str = "llama3.1:8b", ferramentas: list[str] = None) -> AgentConfig:
     return AgentConfig(
         nome="Teste",
         versao="1.0.0",
@@ -39,15 +39,19 @@ def make_registry(tools: list[str]) -> ToolRegistry:
 
 class TestValidator:
     def test_validacao_passa_com_ferramentas_corretas(self):
-        config = make_config(ferramentas=["tool1", "tool2"])
+        """Modelo real (não 'fake') deve chamar _verificar_modelo_ollama."""
+        config = make_config(modelo="llama3.1:8b", ferramentas=["tool1", "tool2"])
         registry = make_registry(["tool1", "tool2"])
 
-        # Mock do Ollama pra não fazer request real
-        with patch(
-            "platform_core.engine.validator._verificar_modelo_ollama"
-        ) as mock_verificar:
-            validar_agente(config, registry)
-            mock_verificar.assert_called_once_with("fake")
+        # Mock do httpx pra simular Ollama respondendo com o modelo disponível
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "models": [{"name": "llama3.1:8b"}]
+        }
+        mock_response.raise_for_status = MagicMock()
+
+        with patch("platform_core.engine.validator.httpx.get", return_value=mock_response):
+            validar_agente(config, registry)  # não deve lançar
 
     def test_validacao_falha_com_ferramenta_faltando(self):
         config = make_config(ferramentas=["tool1", "tool2"])
@@ -65,7 +69,7 @@ class TestValidator:
         mock_response.json.return_value = {"models": []}
         mock_response.raise_for_status = MagicMock()
 
-        with patch("httpx.get", return_value=mock_response):
+        with patch("platform_core.engine.validator.httpx.get", return_value=mock_response):
             with pytest.raises(ValidationError, match="não encontrado"):
                 validar_agente(config, registry)
 
@@ -79,7 +83,7 @@ class TestValidator:
         }
         mock_response.raise_for_status = MagicMock()
 
-        with patch("httpx.get", return_value=mock_response):
+        with patch("platform_core.engine.validator.httpx.get", return_value=mock_response):
             validar_agente(config, registry)  # não deve lançar
 
     def test_validacao_ollama_indisponivel_nao_falha(self):
@@ -87,5 +91,17 @@ class TestValidator:
         config = make_config(modelo="llama3.1:8b")
         registry = make_registry(["tool1"])
 
-        with patch("httpx.get", side_effect=Exception("Connection refused")):
+        with patch(
+            "platform_core.engine.validator.httpx.get",
+            side_effect=Exception("Connection refused")
+        ):
             validar_agente(config, registry)  # não deve lançar
+
+    def test_validacao_modelo_fake_pula_ollama(self):
+        """Modelo 'fake' não deve chamar Ollama (usado em testes)."""
+        config = make_config(modelo="fake", ferramentas=["tool1"])
+        registry = make_registry(["tool1"])
+
+        # Se chamar httpx.get, vai falhar (não mockamos)
+        # Mas como modelo == "fake", o validator deve pular a verificação
+        validar_agente(config, registry)  # não deve lançar

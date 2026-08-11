@@ -4,17 +4,28 @@ from pathlib import Path
 
 import pytest
 
-from platform_core.config.settings import reset_settings
+from platform_core.config import settings as settings_module
+from platform_core.logging import structured as structured_module
 from platform_core.logging.structured import get_logger, setup_logging
 
 
 @pytest.fixture(autouse=True)
 def _limpa(tmp_path, monkeypatch):
-    """Usa um diretório temporário pra logs."""
-    reset_settings()
+    """Usa um diretório temporário pra logs e reseta caches globais."""
+    # Reseta o cache de settings
+    settings_module.reset_settings()
+    
+    # Reseta o flag de configuração do logging
+    structured_module._configurado = False
+    
+    # Configura LOG_DIR antes de qualquer chamada a get_settings()
     monkeypatch.setenv("LOG_DIR", str(tmp_path))
+    
     yield
-    reset_settings()
+    
+    # Limpa após o teste
+    settings_module.reset_settings()
+    structured_module._configurado = False
 
 
 class TestLogging:
