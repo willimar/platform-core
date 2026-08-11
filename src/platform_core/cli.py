@@ -10,6 +10,7 @@ from rich.panel import Panel
 
 from platform_core.config.loader import AgentLoadError, load_agent
 from platform_core.engine.executor import Executor
+from platform_core.engine.validator import ValidationError, validar_agente
 from platform_core.llm.ollama import OllamaClient
 from platform_core.logging.structured import setup_logging
 from platform_core.tools.registry import ToolRegistry
@@ -33,7 +34,7 @@ def run(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Log detalhado"),
 ):
     """Executa um agente a partir do seu agent.yaml."""
-    setup_logging(level="DEBUG" if verbose else "INFO", verbose=verbose)
+    setup_logging(verbose=verbose)
 
     try:
         # 1. Carrega o agente
@@ -51,12 +52,11 @@ def run(
         else:
             console.print("[yellow][AVISO][/] Diretorio tools/ nao encontrado")
 
-        # 3. Valida que todas as ferramentas declaradas existem
-        faltando = [t for t in config.ferramentas if not registry.has(t)]
-        if faltando:
-            console.print(
-                f"[bold red][ERRO][/] Ferramentas nao encontradas: {', '.join(faltando)}"
-            )
+        # 3. Validação pré-voo
+        try:
+            validar_agente(config, registry)
+        except ValidationError as e:
+            console.print(f"[bold red][ERRO][/] Validação falhou: {e}")
             raise typer.Exit(code=1)
 
         # 4. Cria o cliente LLM e executor

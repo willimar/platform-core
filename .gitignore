@@ -71,3 +71,7 @@ tmp/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Logs
+logs/
+*.log
