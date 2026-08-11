@@ -153,7 +153,9 @@ Changelog em `CHANGELOG.md`
 
 ## Licença
 
-Este projeto é licenciado sob a **PolyForm Noncommercial License 1.0.0**.
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0).
 
-- ✅ Livre para uso educacional, pessoal e de pesquisa
-- ❌ Uso comercial requer licença paga — entre em contato
+- ✅ Compartilhar e adaptar com atribuição
+- ❌ Sem uso comercial
+
+Veja [LICENSE](LICENSE) para os termos completos.
