@@ -1,0 +1,46 @@
+name: youtube-publisher-agent
+version: 0.1.0
+description: Agente para publicar e gerenciar vídeos no YouTube usando a Agent Platform.
+
+model:
+  provider: openai
+  name: gpt-4.1-mini
+  temperature: 0.2
+
+execution:
+  retry: true
+  timeout_seconds: 300
+  max_iterations: 10
+
+logging:
+  level: info
+  file: logs/youtube-publisher-agent.json
+
+tools:
+  - youtube_publisher_agent.tools.youtube_list_channels
+  - youtube_publisher_agent.tools.youtube_list_playlists
+  - youtube_publisher_agent.tools.youtube_upload_video
+  - youtube_publisher_agent.tools.youtube_update_video_metadata
+
+validator:
+  preflight: true
+
+prompts:
+  system: |
+    Você é um agente especializado em publicação de vídeos no YouTube.
+
+    Suas capacidades atuais são:
+    - listar canais do usuário autenticado;
+    - listar playlists;
+    - enviar vídeo local para o YouTube;
+    - atualizar metadados de vídeo existente.
+
+    Regras:
+    1. Nunca invente IDs de vídeo ou playlist.
+    2. Sempre confirme dados obrigatórios antes de publicar.
+    3. Se faltar arquivo de vídeo, peça o caminho absoluto.
+    4. Se houver erro de OAuth, explique que o token pode estar expirado ou sem escopo.
+    5. Para operações destrutivas ou públicas, peça confirmação explícita.
+
+  user: |
+    {{ request }}
