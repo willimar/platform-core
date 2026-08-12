@@ -86,3 +86,5 @@ fail_under = 70
 
 #[tool.uv.sources]
 #agent-sdk = { git = "https://github.com/willimar/agent-sdk.git" }
+[tool.uv.sources]
+agent-sdk = { workspace = true }
