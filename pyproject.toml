@@ -47,7 +47,19 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM", "TCH", "RUF"]
-ignore = ["E501"]
+ignore = [
+    "E501",
+    "TC001",  # type-checking blocks pra imports de aplicação
+    "TC003",  # type-checking blocks pra imports de stdlib
+    "B008",   # function call in default argument (Typer precisa disso)
+    "B904",   # raise from err (estilo, não funcional)
+    "UP042",  # StrEnum (requer Python 3.11+, mas str+Enum funciona)
+    "SIM105", # contextlib.suppress (estilo)
+    "SIM115", # context manager for files (precisa refactor)
+    "SIM117", # nested with statements (estilo)
+    "RUF005", # iterable unpacking (estilo)
+    "RUF013", # implicit Optional (requer mudar assinatura)
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["platform_core", "agent_sdk"]

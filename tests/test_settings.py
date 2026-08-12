@@ -1,6 +1,5 @@
 """Testes das configurações globais."""
 
-
 import pytest
 
 from platform_core.config.settings import Settings, get_settings, reset_settings
