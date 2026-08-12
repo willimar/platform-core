@@ -1,1 +1,1 @@
-﻿"""Tool registry."""
+"""Tool registry."""

@@ -45,9 +45,7 @@ class TestValidator:
 
         # Mock do httpx pra simular Ollama respondendo com o modelo disponível
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "models": [{"name": "llama3.1:8b"}]
-        }
+        mock_response.json.return_value = {"models": [{"name": "llama3.1:8b"}]}
         mock_response.raise_for_status = MagicMock()
 
         with patch("platform_core.engine.validator.httpx.get", return_value=mock_response):
@@ -78,9 +76,7 @@ class TestValidator:
         registry = make_registry(["tool1"])
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "models": [{"name": "llama3.1:8b"}]
-        }
+        mock_response.json.return_value = {"models": [{"name": "llama3.1:8b"}]}
         mock_response.raise_for_status = MagicMock()
 
         with patch("platform_core.engine.validator.httpx.get", return_value=mock_response):
@@ -92,8 +88,7 @@ class TestValidator:
         registry = make_registry(["tool1"])
 
         with patch(
-            "platform_core.engine.validator.httpx.get",
-            side_effect=Exception("Connection refused")
+            "platform_core.engine.validator.httpx.get", side_effect=Exception("Connection refused")
         ):
             validar_agente(config, registry)  # não deve lançar
 

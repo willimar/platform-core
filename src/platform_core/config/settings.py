@@ -29,15 +29,9 @@ class Settings:
     ollama_default_model: str = field(
         default_factory=lambda: os.getenv("OLLAMA_MODEL", "llama3.1:8b")
     )
-    log_level: str = field(
-        default_factory=lambda: os.getenv("LOG_LEVEL", "INFO")
-    )
-    log_dir: Path = field(
-        default_factory=lambda: Path(os.getenv("LOG_DIR", "logs"))
-    )
-    max_retries: int = field(
-        default_factory=lambda: int(os.getenv("MAX_RETRIES", "2"))
-    )
+    log_level: str = field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
+    log_dir: Path = field(default_factory=lambda: Path(os.getenv("LOG_DIR", "logs")))
+    max_retries: int = field(default_factory=lambda: int(os.getenv("MAX_RETRIES", "2")))
     request_timeout: float = field(
         default_factory=lambda: float(os.getenv("REQUEST_TIMEOUT", "120.0"))
     )
@@ -46,15 +40,12 @@ class Settings:
         """Validações pós-inicialização."""
         if self.log_level not in ("DEBUG", "INFO", "WARNING", "ERROR"):
             raise ValueError(
-                f"LOG_LEVEL inválido: {self.log_level}. "
-                f"Use DEBUG, INFO, WARNING ou ERROR."
+                f"LOG_LEVEL inválido: {self.log_level}. Use DEBUG, INFO, WARNING ou ERROR."
             )
         if self.max_retries < 0:
             raise ValueError(f"MAX_RETRIES deve ser >= 0, recebido: {self.max_retries}")
         if self.request_timeout <= 0:
-            raise ValueError(
-                f"REQUEST_TIMEOUT deve ser > 0, recebido: {self.request_timeout}"
-            )
+            raise ValueError(f"REQUEST_TIMEOUT deve ser > 0, recebido: {self.request_timeout}")
 
 
 # Instância global (singleton).

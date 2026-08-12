@@ -1,4 +1,4 @@
-﻿"""Carregador de agent.yaml.
+"""Carregador de agent.yaml.
 
 Lê o arquivo, valida contra o schema Pydantic e retorna um AgentConfig.
 """
@@ -43,7 +43,7 @@ def load_agent(path: str | Path) -> AgentConfig:
         raise AgentLoadError(f"Caminho não é um arquivo: {caminho}")
 
     try:
-        with open(caminho, "r", encoding="utf-8") as f:
+        with open(caminho, encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise AgentLoadError(f"YAML inválido em {caminho}: {e}") from e
@@ -56,9 +56,7 @@ def load_agent(path: str | Path) -> AgentConfig:
     try:
         config = AgentConfig.model_validate(data)
     except Exception as e:
-        raise AgentLoadError(
-            f"agent.yaml inválido em {caminho}: {e}"
-        ) from e
+        raise AgentLoadError(f"agent.yaml inválido em {caminho}: {e}") from e
 
     logger.info(
         "agente_carregado",

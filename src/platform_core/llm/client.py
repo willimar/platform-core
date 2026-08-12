@@ -1,4 +1,4 @@
-﻿"""Interface abstrata para clientes de LLM."""
+"""Interface abstrata para clientes de LLM."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-﻿"""Parser de resposta do LLM.
+"""Parser de resposta do LLM.
 
 Interpreta a resposta do LLM, extraindo a decisão (usar ferramenta
 ou finalizar) e seus parâmetros.
@@ -92,14 +92,10 @@ def parse_response(raw: str) -> LLMResponse:
         data = json.loads(json_text)
     except json.JSONDecodeError as e:
         logger.warning("json_invalido", erro=str(e), raw=raw[:500])
-        raise LLMParseError(
-            f"Resposta do LLM não é JSON válido: {e}. Resposta: {raw[:200]}"
-        ) from e
+        raise LLMParseError(f"Resposta do LLM não é JSON válido: {e}. Resposta: {raw[:200]}") from e
 
     if not isinstance(data, dict):
-        raise LLMParseError(
-            f"Esperado dict no topo do JSON, recebido: {type(data).__name__}"
-        )
+        raise LLMParseError(f"Esperado dict no topo do JSON, recebido: {type(data).__name__}")
 
     acao = data.get("acao")
 
@@ -119,21 +115,15 @@ def parse_response(raw: str) -> LLMResponse:
             ferramenta=ferramenta,
             parametros=parametros,
         )
-        return LLMResponse(
-            tool_call=ToolCall(nome=ferramenta, parametros=parametros)
-        )
+        return LLMResponse(tool_call=ToolCall(nome=ferramenta, parametros=parametros))
 
     if acao == "finalizar":
         resposta = data.get("resposta")
         if resposta is None:
-            raise LLMParseError(
-                "Campo 'resposta' ausente para ação 'finalizar'"
-            )
+            raise LLMParseError("Campo 'resposta' ausente para ação 'finalizar'")
         if not isinstance(resposta, str):
             resposta = str(resposta)
         logger.info("resposta_final", tamanho=len(resposta))
         return LLMResponse(final_text=resposta)
 
-    raise LLMParseError(
-        f"Ação desconhecida: '{acao}'. Esperado 'usar_ferramenta' ou 'finalizar'."
-    )
+    raise LLMParseError(f"Ação desconhecida: '{acao}'. Esperado 'usar_ferramenta' ou 'finalizar'.")

@@ -1,4 +1,4 @@
-﻿"""Schemas Pydantic para agent.yaml.
+"""Schemas Pydantic para agent.yaml.
 
 Define o contrato tipado que um arquivo agent.yaml deve seguir.
 """
@@ -9,7 +9,6 @@ import re
 from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
-
 
 SEMVER_PATTERN = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
@@ -22,9 +21,7 @@ SEMVER_PATTERN = re.compile(
 class TarefaSpec(BaseModel):
     """Especificação da tarefa do agente."""
 
-    descricao: str = Field(
-        ..., min_length=5, description="O que o agente deve fazer"
-    )
+    descricao: str = Field(..., min_length=5, description="O que o agente deve fazer")
     saida_esperada: str = Field(
         ...,
         min_length=5,
@@ -41,9 +38,7 @@ class AgentConfig(BaseModel):
     nome: str = Field(..., min_length=1, description="Nome legível do agente")
     versao: str = Field(..., description="Versão semântica (MAJOR.MINOR.PATCH)")
     modelo: str = Field(..., description="Identificador do LLM")
-    instrucoes: str = Field(
-        ..., min_length=10, description="System prompt do agente"
-    )
+    instrucoes: str = Field(..., min_length=10, description="System prompt do agente")
     ferramentas: list[str] = Field(
         ..., min_length=1, description="Nomes das ferramentas disponíveis"
     )
@@ -61,9 +56,7 @@ class AgentConfig(BaseModel):
     def validar_semver(cls, v: str) -> str:
         """Valida que a versão segue SemVer."""
         if not SEMVER_PATTERN.match(v):
-            raise ValueError(
-                f"Versão '{v}' não segue o formato SemVer (MAJOR.MINOR.PATCH)"
-            )
+            raise ValueError(f"Versão '{v}' não segue o formato SemVer (MAJOR.MINOR.PATCH)")
         return v
 
     @field_validator("ferramentas")
@@ -74,9 +67,7 @@ class AgentConfig(BaseModel):
             if not nome or not nome.strip():
                 raise ValueError("Nome de ferramenta não pode ser vazio")
             if " " in nome:
-                raise ValueError(
-                    f"Nome de ferramenta não pode conter espaços: '{nome}'"
-                )
+                raise ValueError(f"Nome de ferramenta não pode conter espaços: '{nome}'")
         # Remove duplicatas preservando ordem
         seen: set[str] = set()
         sem_dup: list[str] = []

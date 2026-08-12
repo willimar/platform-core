@@ -1,4 +1,4 @@
-﻿"""Executor de agentes — loop principal."""
+"""Executor de agentes — loop principal."""
 
 from __future__ import annotations
 
@@ -117,9 +117,7 @@ class Executor:
                         limite_s=config.timeout_segundos,
                     )
                     state.status = AgentStatus.TIMEOUT
-                    state.erro = (
-                        f"Timeout de {config.timeout_segundos}s excedido."
-                    )
+                    state.erro = f"Timeout de {config.timeout_segundos}s excedido."
                     break
 
                 state.passo_atual += 1
@@ -182,9 +180,7 @@ class Executor:
                         )
                         continue
 
-                    resultado_tool = self._executar_com_retry(
-                        tool_call.nome, tool_call.parametros
-                    )
+                    resultado_tool = self._executar_com_retry(tool_call.nome, tool_call.parametros)
                     state.registrar_ferramenta(tool_call.nome)
                     state.adicionar_mensagem(
                         "tool",
@@ -207,14 +203,10 @@ class Executor:
                 # Proteção 2: limite de passos
                 logger.warning("limite_passos_atingido", max_passos=config.max_passos)
                 state.status = AgentStatus.TIMEOUT
-                state.erro = (
-                    f"Limite de {config.max_passos} passos atingido sem conclusão."
-                )
+                state.erro = f"Limite de {config.max_passos} passos atingido sem conclusão."
 
         except Exception as e:
-            logger.error(
-                "erro_inesperado_executor", erro=str(e), tipo=type(e).__name__
-            )
+            logger.error("erro_inesperado_executor", erro=str(e), tipo=type(e).__name__)
             state.status = AgentStatus.ERRO
             state.erro = f"Erro inesperado: {type(e).__name__}: {e}"
 
@@ -229,9 +221,7 @@ class Executor:
         )
         return state
 
-    def _executar_com_retry(
-        self, nome: str, parametros: dict[str, Any]
-    ) -> Any:
+    def _executar_com_retry(self, nome: str, parametros: dict[str, Any]) -> Any:
         """Executa uma ferramenta, repetindo apenas erros transitórios.
 
         Erros com retry=True são tentados de novo (backoff exponencial).

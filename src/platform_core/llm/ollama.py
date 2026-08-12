@@ -1,4 +1,4 @@
-﻿"""Cliente HTTP para Ollama."""
+"""Cliente HTTP para Ollama."""
 
 from __future__ import annotations
 
@@ -28,10 +28,9 @@ class OllamaClient(LLMClient):
         base_url: str | None = None,
         timeout: float = 120.0,
     ) -> None:
-        self.base_url = (
-            base_url
-            or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-        ).rstrip("/")
+        self.base_url = (base_url or os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")).rstrip(
+            "/"
+        )
         self.timeout = timeout
         self._client = httpx.Client(timeout=timeout)
 
@@ -91,8 +90,7 @@ class OllamaClient(LLMClient):
                 response=e.response.text[:500],
             )
             raise LLMError(
-                f"Ollama retornou erro HTTP {e.response.status_code}: "
-                f"{e.response.text[:200]}"
+                f"Ollama retornou erro HTTP {e.response.status_code}: {e.response.text[:200]}"
             ) from e
 
         try:
@@ -103,9 +101,7 @@ class OllamaClient(LLMClient):
 
         if "message" not in data or "content" not in data["message"]:
             logger.error("ollama_resposta_invalida", data=data)
-            raise LLMError(
-                f"Resposta do Ollama não contém 'message.content': {data}"
-            )
+            raise LLMError(f"Resposta do Ollama não contém 'message.content': {data}")
 
         content = data["message"]["content"]
         logger.info(

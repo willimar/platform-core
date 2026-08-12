@@ -1,4 +1,4 @@
-﻿"""CLI entry point da platform-core."""
+"""CLI entry point da platform-core."""
 
 from __future__ import annotations
 
@@ -25,12 +25,8 @@ console = Console(emoji=False)
 
 @app.command()
 def run(
-    agent_path: Path = typer.Argument(
-        ..., help="Caminho para o agent.yaml", exists=True
-    ),
-    entrada: str = typer.Option(
-        "", "--entrada", "-e", help="Mensagem inicial do usuário"
-    ),
+    agent_path: Path = typer.Argument(..., help="Caminho para o agent.yaml", exists=True),
+    entrada: str = typer.Option("", "--entrada", "-e", help="Mensagem inicial do usuário"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Log detalhado"),
 ):
     """Executa um agente a partir do seu agent.yaml."""
@@ -104,9 +100,7 @@ def run(
 
 @app.command()
 def validate(
-    agent_path: Path = typer.Argument(
-        ..., help="Caminho para o agent.yaml", exists=True
-    ),
+    agent_path: Path = typer.Argument(..., help="Caminho para o agent.yaml", exists=True),
 ):
     """Valida um agent.yaml sem executar."""
     try:
@@ -133,9 +127,7 @@ app.add_typer(tools_app, name="tools")
 
 @tools_app.command("list")
 def tools_list(
-    agent_path: Path = typer.Argument(
-        ..., help="Caminho para o agent.yaml", exists=True
-    ),
+    agent_path: Path = typer.Argument(..., help="Caminho para o agent.yaml", exists=True),
 ):
     """Lista ferramentas disponíveis em um agente."""
     try:

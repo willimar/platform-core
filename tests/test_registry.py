@@ -2,7 +2,7 @@
 
 import pytest
 
-from agent_sdk import ToolExecutionError, ToolResult, tool, clear_registry
+from agent_sdk import ToolExecutionError, clear_registry, tool
 from platform_core.tools.registry import ToolRegistry
 
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from agent_sdk import ToolExecutionError
 from agent_sdk.types import ToolSpec
 from platform_core.config.schema import AgentConfig, TarefaSpec
@@ -30,6 +28,7 @@ class FakeLLM(LLMClient):
 # ── Ferramentas fake ───────────────────────────────────────────
 # Definidas como funções simples + ToolSpec explícito.
 # NÃO usamos @tool aqui para não depender do registry global.
+
 
 class FakeState:
     """Estado mutável das ferramentas fake (contadores)."""
@@ -63,6 +62,7 @@ def _fake_fatal(state: FakeState) -> str:
 
 
 # ── Helpers ────────────────────────────────────────────────────
+
 
 def _make_specs(state: FakeState) -> list[ToolSpec]:
     """Cria as ToolSpecs das ferramentas fake, fechando sobre o state."""
@@ -142,6 +142,7 @@ FINAL = '{"acao": "finalizar", "resposta": "terminei"}'
 
 # ── Testes ─────────────────────────────────────────────────────
 
+
 class TestExecutor:
     def test_finaliza_imediato(self):
         executor, llm, _ = make_executor([FINAL], ["fake_ok"])
@@ -180,19 +181,19 @@ class TestExecutor:
 
     def test_timeout_global(self, monkeypatch):
         """Timeout deve disparar antes de executar passos quando tempo excedido.
-        
+
         Mockamos time.perf_counter para simular passagem de tempo sem delay real.
         """
         config = make_config(["fake_ok"], timeout_segundos=10)
         executor, llm, _ = make_executor([TOOL_CALL_OK, FINAL], ["fake_ok"])
-        
+
         # Mock do tempo: inicio=0, depois 100s (ultrapassa timeout de 10s)
         tempos = [0, 100, 100, 100]
         monkeypatch.setattr(
             "platform_core.engine.executor.time.perf_counter",
-            lambda: tempos.pop(0) if tempos else 100
+            lambda: tempos.pop(0) if tempos else 100,
         )
-        
+
         state = executor.executar(config)
         assert state.status == AgentStatus.TIMEOUT
         assert "Timeout" in state.erro
@@ -204,9 +205,7 @@ class TestExecutor:
     def test_ferramenta_inexistente_volta_para_llm(self):
         """Se o LLM pede uma ferramenta que não existe, o executor
         informa e o loop continua."""
-        call_ruim = (
-            '{"acao": "usar_ferramenta", "ferramenta": "nao_existe", "parametros": {}}'
-        )
+        call_ruim = '{"acao": "usar_ferramenta", "ferramenta": "nao_existe", "parametros": {}}'
         executor, llm, _ = make_executor([call_ruim, FINAL], ["fake_ok"])
         state = executor.executar(make_config(["fake_ok"]))
         assert state.status == AgentStatus.FINALIZADO

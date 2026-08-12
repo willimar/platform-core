@@ -1,1 +1,1 @@
-﻿"""Testes da platform-core."""
+"""Testes da platform-core."""

@@ -1,1 +1,1 @@
-﻿"""Motor de execução de agentes."""
+"""Motor de execução de agentes."""

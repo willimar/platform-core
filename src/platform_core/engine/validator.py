@@ -44,10 +44,7 @@ def validar_agente(config: AgentConfig, registry: ToolRegistry) -> None:
     # 1. Ferramentas declaradas existem?
     faltando = [t for t in config.ferramentas if not registry.has(t)]
     if faltando:
-        msg = (
-            f"Ferramentas declaradas no YAML não encontradas no registry: "
-            f"{', '.join(faltando)}"
-        )
+        msg = f"Ferramentas declaradas no YAML não encontradas no registry: {', '.join(faltando)}"
         logger.error("ferramentas_faltando", faltando=faltando)
         raise ValidationError(msg)
 
@@ -104,9 +101,7 @@ def _verificar_modelo_ollama(modelo: str) -> None:
 
     # Ollama aceita "llama3.1:8b" ou "llama3.1:8b-instruct-q4_0"
     # Verifica se o modelo pedido está na lista (match exato ou prefixo)
-    modelo_encontrado = any(
-        nome == modelo or nome.startswith(modelo) for nome in nomes
-    )
+    modelo_encontrado = any(nome == modelo or nome.startswith(modelo) for nome in nomes)
 
     if not modelo_encontrado:
         msg = (

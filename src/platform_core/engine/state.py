@@ -1,4 +1,4 @@
-﻿"""Estado do agente durante execução.
+"""Estado do agente durante execução.
 
 O AgentState é o objeto que circula pelo loop de execução.
 Cada passo do loop lê, modifica e devolve o estado.

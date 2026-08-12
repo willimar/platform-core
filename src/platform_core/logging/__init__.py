@@ -1,1 +1,1 @@
-﻿"""Logging estruturado."""
+"""Logging estruturado."""

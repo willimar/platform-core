@@ -1,6 +1,5 @@
 """Testes das configurações globais."""
 
-import os
 
 import pytest
 

@@ -1,1 +1,1 @@
-﻿"""Carregamento e validação de agent.yaml."""
+"""Carregamento e validação de agent.yaml."""

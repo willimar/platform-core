@@ -1,4 +1,4 @@
-﻿"""Registry de ferramentas.
+"""Registry de ferramentas.
 
 Descobre ferramentas registradas via @tool em módulos de agentes
 e fornece execução segura com captura de erros.
@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Any
 
 from agent_sdk import ToolExecutionError, ToolResult, ToolSpec, get_registry
-
 from platform_core.logging.structured import get_logger
 
 logger = get_logger(__name__)
@@ -117,9 +116,7 @@ class ToolRegistry:
         """Lista todas as specs registradas."""
         return list(self._tools.values())
 
-    def execute(
-        self, nome: str, parametros: dict[str, Any] | None = None
-    ) -> ToolExecutionResult:
+    def execute(self, nome: str, parametros: dict[str, Any] | None = None) -> ToolExecutionResult:
         """Executa uma ferramenta com captura de erros.
 
         Raises:
@@ -149,9 +146,7 @@ class ToolRegistry:
                 ferramenta=nome,
                 duracao_ms=round(duracao_ms, 2),
             )
-            return ToolExecutionResult(
-                nome=nome, resultado=tool_result, duracao_ms=duracao_ms
-            )
+            return ToolExecutionResult(nome=nome, resultado=tool_result, duracao_ms=duracao_ms)
 
         except ToolExecutionError as e:
             duracao_ms = (time.perf_counter() - inicio) * 1000
@@ -164,9 +159,7 @@ class ToolRegistry:
             )
             return ToolExecutionResult(
                 nome=nome,
-                resultado=ToolResult.falha(
-                    e.mensagem, duracao_ms=duracao_ms, retry=e.retry
-                ),
+                resultado=ToolResult.falha(e.mensagem, duracao_ms=duracao_ms, retry=e.retry),
                 duracao_ms=duracao_ms,
             )
 

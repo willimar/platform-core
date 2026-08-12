@@ -1,10 +1,8 @@
-﻿"""Configuração do logging estruturado com structlog."""
+"""Configuração do logging estruturado com structlog."""
 
 from __future__ import annotations
 
 import logging
-import sys
-from pathlib import Path
 
 import structlog
 
@@ -51,6 +49,7 @@ def setup_logging(verbose: bool = False) -> None:
     # Configura loggers separados: stderr (colorido ou JSON) e arquivo (sempre JSON)
     class DualWriter:
         """Escreve em dois sinks com renderers diferentes."""
+
         def __init__(self, console_out, file_out):
             self.console_out = console_out
             self.file_out = file_out
@@ -78,12 +77,11 @@ def setup_logging(verbose: bool = False) -> None:
     writer = DualWriter(console_writer, log_file_handle)
 
     structlog.configure(
-        processors=processors + [
+        processors=processors
+        + [
             lambda logger, method_name, event_dict: writer.write(event_dict) or event_dict,
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(logging, level, logging.INFO)
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, level, logging.INFO)),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
         cache_logger_on_first_use=False,
