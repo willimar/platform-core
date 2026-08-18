@@ -66,3 +66,44 @@ def load_agent(path: str | Path) -> AgentConfig:
         ferramentas=config.ferramentas,
     )
     return config
+
+
+def resolve_tools_dir(agent_path: Path, config: AgentConfig) -> Path:
+    """Resolve o diretório de ferramentas do agente.
+
+    Ordem de precedência:
+    1. Campo tools_dir no YAML (relativo ao diretório-pai do YAML)
+    2. Convenção: tools/ ao lado do YAML
+    3. Busca ascendente limitada (até 3 níveis) por tools/
+
+    Args:
+        agent_path: Caminho do YAML do agente.
+        config: Configuração carregada do agente.
+
+    Returns:
+        Path resolvido do diretório de ferramentas (pode não existir;
+        o CLI emite o aviso de sempre nesse caso).
+    """
+    base = agent_path.resolve().parent
+
+    # 1. Explícito vence
+    if config.tools_dir:
+        return (base / config.tools_dir).resolve()
+
+    # 2. Convenção
+    convencional = base / "tools"
+    if convencional.exists():
+        return convencional
+
+    # 3. Fallback ascendente limitado
+    for ancestor in [base, *base.parents[:3]]:
+        candidato = ancestor / "tools"
+        if candidato.exists():
+            logger.info(
+                "tools_dir_resolvido_por_busca",
+                yaml=str(agent_path),
+                tools_dir=str(candidato),
+            )
+            return candidato
+
+    return convencional

@@ -9,29 +9,32 @@ import structlog
 from platform_core.config.settings import get_settings
 
 _configurado = False
+_log_file_handle = None
 
 
 def setup_logging(verbose: bool = False) -> None:
     """Configura o logging estruturado.
 
+    Logs vão para dois sinks simultaneamente:
+    - stderr (console): JSON ou colorido (se verbose)
+    - arquivo (logs/platform.log): sempre JSON
+
     Args:
         verbose: Se True, usa console renderer colorido; se False, JSON.
     """
-    global _configurado
+    global _configurado, _log_file_handle
     if _configurado:
         return
 
     settings = get_settings()
     level = "DEBUG" if verbose else settings.log_level
 
-    # Cria o diretório de logs
+    # Cria diretório de logs e abre o arquivo com line buffering (autoflush)
     settings.log_dir.mkdir(parents=True, exist_ok=True)
     log_file = settings.log_dir / "platform.log"
+    _log_file_handle = open(log_file, "a", encoding="utf-8", buffering=1)
 
-    # Abre o arquivo de log (append mode, autoflush via line_buffering)
-    log_file_handle = open(log_file, "a", encoding="utf-8", buffering=1)
-
-    # Renderers
+    # Processors comuns
     processors = [
         structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
@@ -39,48 +42,25 @@ def setup_logging(verbose: bool = False) -> None:
         structlog.processors.TimeStamper(fmt="iso"),
     ]
 
+    # Renderers separados pra cada sink
+    file_renderer = structlog.processors.JSONRenderer()
     if verbose:
         console_renderer = structlog.dev.ConsoleRenderer()
     else:
         console_renderer = structlog.processors.JSONRenderer()
 
-    file_renderer = structlog.processors.JSONRenderer()
+    def write_to_file(logger, method_name, event_dict):
+        """Escreve JSON no arquivo e devolve o event_dict pro próximo processor."""
+        rendered = file_renderer(logger, method_name, event_dict)
+        _log_file_handle.write(rendered + "\n")
+        return event_dict  # dict intacto, não string
 
-    # Configura loggers separados: stderr (colorido ou JSON) e arquivo (sempre JSON)
-    class DualWriter:
-        """Escreve em dois sinks com renderers diferentes."""
-
-        def __init__(self, console_out, file_out):
-            self.console_out = console_out
-            self.file_out = file_out
-
-        def write(self, event_dict):
-            # Console
-            try:
-                self.console_out(event_dict, None)
-            except Exception:
-                pass
-            # Arquivo
-            try:
-                linha = file_renderer(None, None, event_dict)
-                self.file_out.write(linha + "\n")
-            except Exception:
-                pass
-
-        def flush(self):
-            try:
-                self.file_out.flush()
-            except Exception:
-                pass
-
-    console_writer = console_renderer
-    writer = DualWriter(console_writer, log_file_handle)
+    def render_for_console(logger, method_name, event_dict):
+        """ÚLTIMO processor: devolve STRING pro PrintLogger."""
+        return console_renderer(logger, method_name, event_dict)
 
     structlog.configure(
-        processors=processors
-        + [
-            lambda logger, method_name, event_dict: writer.write(event_dict) or event_dict,
-        ],
+        processors=processors + [write_to_file, render_for_console],
         wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, level, logging.INFO)),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(),
@@ -89,7 +69,7 @@ def setup_logging(verbose: bool = False) -> None:
 
     _configurado = True
 
-    # Log de bootstrap (depois de configurado)
+    # Log de bootstrap
     get_logger(__name__).info(
         "logging_configurado",
         level=level,

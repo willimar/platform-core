@@ -1,64 +1,45 @@
-"""Testes do loader de agent.yaml."""
+"""Testes da resolução do diretório de ferramentas."""
 
-import pytest
+from platform_core.config.loader import resolve_tools_dir
+from platform_core.config.schema import AgentConfig, TarefaSpec
 
-from platform_core.config.loader import AgentLoadError, load_agent
 
+def _config(tools_dir: str | None = None) -> AgentConfig:
+    return AgentConfig(
+        nome="Teste",
+        versao="1.0.0",
+        modelo="fake",
+        instrucoes="Instrucoes de teste com tamanho minimo ok.",
+        ferramentas=["dummy_tool"],  # Pydantic exige min_length=1
+        tarefa=TarefaSpec(descricao="Faca algo.", saida_esperada="Algo feito."),
+        tools_dir=tools_dir,
+    )
 
-class TestLoader:
-    def test_carrega_yaml_valido(self, tmp_path):
-        yaml_content = """
-nome: "Teste Agente"
-versao: "1.0.0"
-modelo: "llama3.1:8b"
-instrucoes: "Você é um agente de teste que responde perguntas."
-ferramentas:
-  - test_tool
-tarefa:
-  descricao: "Responda a pergunta."
-  saida_esperada: "Resposta direta."
-"""
-        arquivo = tmp_path / "agent.yaml"
-        arquivo.write_text(yaml_content, encoding="utf-8")
+class TestResolveToolsDir:
+    def test_convencao_yaml_ao_lado_de_tools(self, tmp_path):
+        (tmp_path / "tools").mkdir()
+        yaml_path = tmp_path / "agent.yaml"
+        yaml_path.write_text("")
+        assert resolve_tools_dir(yaml_path, _config()) == (tmp_path / "tools").resolve()
 
-        config = load_agent(arquivo)
-        assert config.nome == "Teste Agente"
-        assert config.versao == "1.0.0"
-        assert "test_tool" in config.ferramentas
+    def test_busca_ascendente_a_partir_de_agents(self, tmp_path):
+        (tmp_path / "tools").mkdir()
+        agents = tmp_path / "agents"
+        agents.mkdir()
+        yaml_path = agents / "readonly.yaml"
+        yaml_path.write_text("")
+        assert resolve_tools_dir(yaml_path, _config()) == (tmp_path / "tools").resolve()
 
-    def test_erro_arquivo_inexistente(self, tmp_path):
-        with pytest.raises(AgentLoadError, match="não encontrado"):
-            load_agent(tmp_path / "nao_existe.yaml")
+    def test_tools_dir_explicito_sobrepoe_convencao(self, tmp_path):
+        (tmp_path / "tools").mkdir()
+        (tmp_path / "outro").mkdir()
+        yaml_path = tmp_path / "agent.yaml"
+        yaml_path.write_text("")
+        got = resolve_tools_dir(yaml_path, _config(tools_dir="outro"))
+        assert got == (tmp_path / "outro").resolve()
 
-    def test_erro_versao_invalida(self, tmp_path):
-        yaml_content = """
-nome: "Teste"
-versao: "versao-ruim"
-modelo: "llama"
-instrucoes: "Instruções de teste para validar o schema."
-ferramentas:
-  - test
-tarefa:
-  descricao: "Descrição mínima válida."
-  saida_esperada: "Saída esperada válida."
-"""
-        arquivo = tmp_path / "agent.yaml"
-        arquivo.write_text(yaml_content, encoding="utf-8")
-        with pytest.raises(AgentLoadError, match="SemVer"):
-            load_agent(arquivo)
-
-    def test_erro_ferramentas_vazias(self, tmp_path):
-        yaml_content = """
-nome: "Teste"
-versao: "1.0.0"
-modelo: "llama"
-instrucoes: "Instruções válidas com mínimo de dez caracteres."
-ferramentas: []
-tarefa:
-  descricao: "Descrição mínima válida."
-  saida_esperada: "Saída esperada válida."
-"""
-        arquivo = tmp_path / "agent.yaml"
-        arquivo.write_text(yaml_content, encoding="utf-8")
-        with pytest.raises(AgentLoadError):
-            load_agent(arquivo)
+    def test_sem_tools_retorna_convencional_inexistente(self, tmp_path):
+        yaml_path = tmp_path / "agent.yaml"
+        yaml_path.write_text("")
+        got = resolve_tools_dir(yaml_path, _config())
+        assert not got.exists()

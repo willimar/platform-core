@@ -8,7 +8,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from platform_core.config.loader import AgentLoadError, load_agent
+from platform_core.config.loader import AgentLoadError, load_agent, resolve_tools_dir
 from platform_core.engine.executor import Executor
 from platform_core.engine.validator import ValidationError, validar_agente
 from platform_core.llm.ollama import OllamaClient
@@ -38,8 +38,7 @@ def run(
         console.print(f"[bold green][OK][/] Agente carregado: {config.nome} v{config.versao}")
 
         # 2. Carrega as ferramentas do diretório do agente
-        agent_dir = agent_path.parent
-        tools_dir = agent_dir / "tools"
+        tools_dir = resolve_tools_dir(agent_path, config)
 
         registry = ToolRegistry()
         if tools_dir.exists():
@@ -132,8 +131,7 @@ def tools_list(
     """Lista ferramentas disponíveis em um agente."""
     try:
         config = load_agent(agent_path)
-        agent_dir = agent_path.parent
-        tools_dir = agent_dir / "tools"
+        tools_dir = resolve_tools_dir(agent_path, config)
 
         registry = ToolRegistry()
         if tools_dir.exists():

@@ -51,6 +51,12 @@ class AgentConfig(BaseModel):
     modelo_fallback: str | None = Field(default=None)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
+    tools_dir: str | None = Field(
+        default=None,
+        description="Diretório de ferramentas relativo ao pai do YAML. "
+        "Padrão: 'tools' ao lado do YAML, com busca ascendente de fallback.",
+    )
+
     @field_validator("versao")
     @classmethod
     def validar_semver(cls, v: str) -> str:
