@@ -85,6 +85,18 @@ class ToolRegistry:
             sys.path.insert(0, str(parent))
             path_added = True
 
+        # Limpa cache de módulos com o mesmo nome (ex: "tools" de outro agente).
+        # Sem isso, o segundo agente carregado no mesmo processo falha porque
+        # sys.modules["tools"] ainda aponta pro primeiro diretório.
+        nome_pacote = directory.name
+        chaves_a_remover = [
+            k for k in sys.modules
+            if k == nome_pacote or k.startswith(f"{nome_pacote}.")
+        ]
+        for k in chaves_a_remover:
+            logger.debug("removendo_modulo_cacheado", modulo=k)
+            del sys.modules[k]
+
         count = 0
         try:
             for path in sorted(directory.glob("*.py")):
