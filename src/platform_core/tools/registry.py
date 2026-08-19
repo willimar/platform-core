@@ -67,6 +67,11 @@ class ToolRegistry:
         Adiciona o diretório-pai ao sys.path para que imports internos
         do agente (ex: from tools.auth import ...) funcionem.
 
+        Como múltiplos agentes podem expor pacotes com o mesmo nome
+        (ex: "tools/") via installs editáveis, o diretório-pai do agente
+        atual é sempre movido para a POSIÇÃO 0 do sys.path, e o cache de
+        módulos homônimos é limpo antes da importação.
+
         Args:
             directory: Diretório contendo módulos com ferramentas.
 
@@ -80,22 +85,24 @@ class ToolRegistry:
             logger.warning("diretorio_nao_existe", diretorio=str(directory))
             return 0
 
-        path_added = False
-        if str(parent) not in sys.path:
-            sys.path.insert(0, str(parent))
-            path_added = True
+        # Posição 0 vence a busca no sys.path — mesmo que o pai já esteja
+        # listado (via .pth de install editável de outro agente homônimo).
+        if str(parent) in sys.path:
+            sys.path.remove(str(parent))
+        sys.path.insert(0, str(parent))
 
-        # Limpa cache de módulos com o mesmo nome (ex: "tools" de outro agente).
-        # Sem isso, o segundo agente carregado no mesmo processo falha porque
-        # sys.modules["tools"] ainda aponta pro primeiro diretório.
+        # Limpa módulos cacheados com o mesmo nome de pacote
+        # (conflito entre agentes no mesmo processo).
         nome_pacote = directory.name
         chaves_a_remover = [
-            k for k in sys.modules
+            k
+            for k in sys.modules
             if k == nome_pacote or k.startswith(f"{nome_pacote}.")
         ]
         for k in chaves_a_remover:
             logger.debug("removendo_modulo_cacheado", modulo=k)
             del sys.modules[k]
+        importlib.invalidate_caches()
 
         count = 0
         try:
@@ -107,8 +114,7 @@ class ToolRegistry:
                 importlib.import_module(module_name)
                 count += self.register_from_global()
         finally:
-            if path_added:
-                sys.path.remove(str(parent))
+            sys.path.remove(str(parent))
 
         return count
 
